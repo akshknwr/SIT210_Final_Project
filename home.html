@@ -1,0 +1,386 @@
+<html>
+<head>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.3.2/jquery.min.js" type="text/javascript" charset="utf-8"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+ <style>
+          
+            body {background-color:rgb(228, 234, 238);}
+            h1   {color: rgb(1,1,1);
+                font-family: verdana;
+  font-size: 300%;}
+   
+            form{
+             
+                transition: 2.5s;
+                display: block;
+                width: fit-content;
+             
+           
+                font-size: xx-large;
+            
+             
+}
+label:hover {
+    background-color:rgb(192, 220, 238);
+    border:1px ridge rgb(43, 71, 48);
+                border-radius: 20%;
+                cursor:pointer;
+  
+}
+
+span{
+    transition:2s;
+}
+label{
+    float: left;
+    width: 200px;
+    padding: 20px;
+    margin: 10px;
+    transition:.4s;
+}
+.alarm-control{
+    transition: 2.5s;
+                display: block;
+                width: fit-content;
+             
+             
+           
+                font-size: xx-large;
+}
+
+
+.flash_light {
+  animation: blinker 1s linear infinite;
+}
+
+@keyframes blinker {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* The Modal (background) */
+.alertbox {
+  display: none; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.8); /* Black w/ opacity */
+  
+}
+/* Modal Content */
+.dialog-content {
+  background-color: #fefefe;
+  
+
+  padding: 20px;
+  margin-left:auto;
+  margin-right:auto;
+  
+  
+  border-radius:45px;
+  
+  width: 50%;
+  height: fit-content;
+}
+.dialog-title{
+    top: 0;
+    border-radius:45px;
+    padding-top:35px;
+    width: 100%;
+    height: 100px;
+    background-color: #00802b;
+    color: rgb(228, 234, 238);
+}
+
+
+.button-class{
+    
+   
+  width: 100px;
+  height: 100px;
+  margin: 0 auto;
+
+}
+
+         
+            </style>
+
+
+
+<title> Smart Flood Detection Alarm System</title>
+
+</head>
+<body>
+<center>
+<h1> Welcome to Smart Flood Detection System </h1>
+ <center>
+    <div id=statusdiv >
+
+   
+    <span class="flash_light" id="status"></span></div>
+
+
+
+<div class="alarm-control">
+  <br><br>
+
+  <p>
+    <label id="photobutton" style="background-color: maroon;">  Take Photo </label>
+      <label id="checkParticle" style="background-color: green; " > Check Particle</label>
+   
+      <label id="buzzer" style="background-color: blue;">   Test Buzzer</label>
+      <label id="stopAlarm" style="background-color: blue;">   Stop Alarm</label>
+
+      <label id="mockFlood" style="background-color: red;">  Mock Flood </label>
+    
+  </p>
+
+</div>
+
+  <img id="recentpic" width ="400">
+</center>
+
+
+
+<div id="dialog" class="alertbox">
+<!-- Modal content -->
+    <div class="dialog-content">
+     <div class="dialog-title">
+        <h5 id="dialogTitle"></h5>
+     </div>
+      <br>
+  <label id="lblMessage"> </label>
+  <br>
+  
+  <div class="button-class">
+     
+    </div>
+   
+  <br><div>
+    <button value="okay" id="alertButton"> ok</button>
+  </div>
+    </div>
+  
+  </div>
+
+
+ <script type="text/javascript">
+    $(document).ready(function(){
+        
+      
+
+        $("#status").css("color","green");
+        start();
+        window.setInterval(GetUpdates, 1000 * 60 * 60 * 5); // check variable every 5 hour to make sure connection is ongoing. 
+
+    })
+$("#photobutton").click(function(){
+console.log("photo button is clicked");
+
+var floodDate= new Date();
+var floodImageName= "Flood_IMG_"+floodDate.toLocaleTimeString();
+  $.ajax({
+                    url:'flood-cgi/flood_cgi.py',
+                    method: 'post',
+                    data :{name_for_image:floodImageName},
+                    success : function(data)
+                    {
+
+                      //alert(data,status)
+                      ShowDialog("Photo is clicked",data);
+
+$("#recentpic").attr("src","flood-cgi/"+floodImageName+".jpg");
+                    }
+                })
+});
+
+ function callAlarm(alarmType){
+console.log(alarmType)
+   $.ajax({
+     url:'flood-cgi/alarm.cgi',
+     method:'post',
+     data:{alarm_type:alarmType},
+     success: function(data){
+       //alert(data)
+       ShowDialog("Done",data);
+
+     },
+     error: function(XMLHttpRequest, textStatus, throwError){
+       //alert(throwError)
+       ShowDialog("Error",throwError);
+     }
+   });
+
+ }
+
+  $("#mockFlood").click(function(){
+      console.log("mock flood has requested");
+      var floodVal=1;
+      $("#signal2").css("font-size","small");
+      if(floodVal){
+        console.log("about to post update");
+        $.post("https://api.particle.io/v1/devices/e00fce68a392b742bd7da9c0/liquid?access_token=bf6a04d745a94b5ec5802203633d463389594dc4",
+  {
+    liquid:floodVal
+  },
+  function(data, status){
+      if(status=="success"){
+          ShowDialog("Success!!!","Mock Flood has conducted!!! ");
+        //alert("Mock Flood has conducted!!!");
+
+      } else{
+          showDialog("Sorry", "there was a problem");
+       // alert("Sorry, there was a problem");
+
+      }
+     
+   
+  });
+
+      }
+ 
+});
+
+$("#checkParticle").click(function(){
+  
+  checkStatus();
+});
+
+$("#buzzer").click(function(){
+  callAlarm("test");
+
+})
+$("#stopAlarm").click(function(){
+  callAlarm("stop");
+
+})
+
+
+
+    function start() {
+
+        document.getElementById("status").innerHTML = "Waiting for data...";
+        var deviceID = "e00fce68a392b742bd7da9c0";
+      var accessToken = "bf6a04d745a94b5ec5802203633d463389594dc4";
+     
+        var eventName="Flood_Detection";
+        var eventSource = new EventSource("https://api.particle.io/v1/devices/" + deviceID + "/events/?access_token=" + accessToken);
+        
+
+        eventSource.addEventListener('open', function(e) {
+            console.log("Opened!");
+            $("status").css("color","green");
+            document.getElementById("status").innerHTML="House is Safe and no flood is detected";
+           
+           },false);
+           
+         
+        eventSource.addEventListener('error', function(e) {
+            console.log("Errored!"); },false);
+         
+        eventSource.addEventListener(eventName, function(e) {
+            var parsedData = JSON.parse(e.data);
+           
+    
+            console.log(parsedData);
+            
+            var dataType = typeof parsedData.data;
+            console.log(dataType);
+            if(parsedData.data =="true"){
+                document.getElementById("status").innerHTML=" Flood has Detected!!! Immidiate Action Needed"
+                $("#status").css("color","red");
+                callAlarm("test");
+            }
+            
+          
+        }, false);
+    }
+
+
+
+function checkStatus(){
+     var varName = "isFloodPresent";
+        var deviceID = "e00fce68a392b742bd7da9c0";
+      var accessToken = "bf6a04d745a94b5ec5802203633d463389594dc4";
+ 
+
+      requestURL = "https://api.particle.io/v1/devices/" + deviceID + "/" + varName + "/?access_token=" + accessToken;
+      $.ajax({
+        type:'GET',
+        url:requestURL,
+        timeout:15000,
+        success:function(data){
+          //connected
+        //  alert("Good news! Particle is connected and running");},
+        ShowDialog("Good news!","Particle is connected and running");},
+error: function(XMLHttpRequest, textStatus, errorThrown){
+          //network error
+        ShowDialog("Not Connected","Looks like Particle is not running or having network problem");} 
+       // alert("looks like Particle is not running or network problem")}
+          
+
+})
+}
+
+    function GetUpdates(){
+        var varName = "isFloodPresent";
+        var deviceID = "e00fce68a392b742bd7da9c0";
+      var accessToken = "bf6a04d745a94b5ec5802203633d463389594dc4";
+ 
+
+      requestURL = "https://api.particle.io/v1/devices/" + deviceID + "/" + varName + "/?access_token=" + accessToken;
+    
+      $.getJSON(requestURL, function(json){
+    //  $.get(requestURL, function(data, status){
+      
+        
+// if flood not detected
+        if(json.result==false){ 
+            $("#signal2").css("color","green");
+            $("#signal2").text("Currently House is safe and no Flood Detected");
+
+        }
+        //if flood detected
+        else if (json.result==true){
+          $("#signal2").css("color","red");
+            $("#signal2").text("Flood Detected!!!! Immidiate action needed");
+        } 
+        
+   
+    
+
+
+console.log(json.result);
+
+
+
+
+});
+}
+
+
+function ShowDialog(title,content){
+  $('.alertbox').show('slow');
+    $("#dialogTitle").text(title);
+    $("#lblMessage").text(content);
+    $("#dialog").css("display","block");
+    
+}
+$("#alertButton").click(function(){
+  $('.alertbox').hide('slow');
+    $("#dialog").css("display","none");
+
+})
+
+    </script>
+
+</body>
+</html>
